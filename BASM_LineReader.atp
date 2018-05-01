@@ -1,4 +1,4 @@
-10 ' ld a,l
+10 ' label: ld   a , l 
 
 10000 ' operand codes
 10010 cnz=0:cz=1:cnc=2:cc=3:cpo=4:cpe=5:cp=6:cm=7
@@ -12,8 +12,9 @@
 10130 DEF FNldrn(r,n)=(6 OR FNFoct(r))*256 + n
 
 10900 dim stmt$(10)
-10910 stmti=0
+10910 stmti=1
 10920 lex$=""
+10930 label=0 ' -1 (true) if line has a label
 
 11000 ' asm line reader
 11010 i = &170
@@ -31,36 +32,37 @@
 11130 gosub 12000
 11140 i = i + 1
 11150 wend
-11155 print stmt$(0)
-11156 gosub 13000
-11160 if stmt$(0) = "ld" then gosub 14000
-11170 i = i + 1
-11180 goto 11020
-11190 end
+11160 if len(lex$)>0 then gosub 13000
+11170 if stmt$(1) = "ld" then gosub 14000
+11180 i = i + 1
+11190 goto 11020
+11200 end
 
 12000 ' lex(char arg1)
 12005 print "process: " + arg1$
-12010 if arg1$=" " or arg1$="," then gosub 13000 else lex$=lex$+arg1$
-12020 return
+12010 if not (arg1$=" " or arg1$=",") then lex$=lex$+arg1$ : return
+12020 if len(lex$) = 0 then return else gosub 13000
+12030 return
 
 13000 ' procesLexeme
 13005 print "lexeme: " + lex$
-13010 stmt$(stmti) = lex$
-13020 lex$=""
-13030 stmti=stmti + 1
-13040 return
+13010 if right$(lex$, 1) = ":" then stmt$(0) = left$(lex$, len(lex$)-1) : label = -1 : lex$="" : return
+13020 stmt$(stmti) = lex$
+13030 lex$=""
+13040 stmti=stmti + 1
+13050 return
 
 14000 ' process ld
 14001 print "process ld"
 14010 oper1=0
 14020 oper2=0
-14030 lowc=asc(stmt$(1))-96
+14030 lowc=asc(stmt$(2))-96
 14040 oper = 0
 14050 if stmt$(1)="h" then oper=rh
 14060 if stmt$(1)="l" then oper=rl
 14070 on lowc gosub 14200, 14201, 14202, 14203, 14204
 14080 oper1=oper
-14090 lowc=asc(stmt$(2))-96
+14090 lowc=asc(stmt$(3))-96
 14100 if stmt$(2)="h" then oper=rh
 14110 if stmt$(2)="l" then oper=rl
 14120 on lowc gosub 14200, 14201, 14202, 14203, 14204

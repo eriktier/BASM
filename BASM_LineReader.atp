@@ -1,0 +1,76 @@
+10 ' ld a,l
+
+10000 ' operand codes
+10010 cnz=0:cz=1:cnc=2:cc=3:cpo=4:cpe=5:cp=6:cm=7
+10020 irx=0:iry=1
+10030 rpbc=0:rpde=1:rphl=2:rpaf=3
+10040 rwbc=0:rwde=1:rwhlixiy=3:rwsp=4
+10050 ra=7:rb=0:rc=1:rd=2:re=3:rh=4:rl=5
+10100 ' opcode functions
+10110 DEF FNfoct(x)=x*8
+10120 DEF FNldrr(a,b)=64 OR FNFoct(a) or b
+10130 DEF FNldrn(r,n)=(6 OR FNFoct(r))*256 + n
+
+10900 dim stmt$(10)
+10910 stmti=0
+10920 lex$=""
+
+11000 ' asm line reader
+11010 i = &170
+11020 l = 0
+11030 if peek(i+3) > 0 then l = peek(i+3) * 256
+11040 l = l + peek(i+2)
+11050 if l > 9999 then end
+11060 print using "line: #####";l
+11070 while not (peek(i) = 197 or peek(i) = 192)
+11080 i = i + 1
+11090 wend
+11100 i = i + 2
+11110 while not peek(i) = 0
+11120 arg1$ = chr$(peek(i))
+11130 gosub 12000
+11140 i = i + 1
+11150 wend
+11155 print stmt$(0)
+11156 gosub 13000
+11160 if stmt$(0) = "ld" then gosub 14000
+11170 i = i + 1
+11180 goto 11020
+11190 end
+
+12000 ' lex(char arg1)
+12005 print "process: " + arg1$
+12010 if arg1$=" " or arg1$="," then gosub 13000 else lex$=lex$+arg1$
+12020 return
+
+13000 ' procesLexeme
+13005 print "lexeme: " + lex$
+13010 stmt$(stmti) = lex$
+13020 lex$=""
+13030 stmti=stmti + 1
+13040 return
+
+14000 ' process ld
+14001 print "process ld"
+14010 oper1=0
+14020 oper2=0
+14030 lowc=asc(stmt$(1))-96
+14040 oper = 0
+14050 if stmt$(1)="h" then oper=rh
+14060 if stmt$(1)="l" then oper=rl
+14070 on lowc gosub 14200, 14201, 14202, 14203, 14204
+14080 oper1=oper
+14090 lowc=asc(stmt$(2))-96
+14100 if stmt$(2)="h" then oper=rh
+14110 if stmt$(2)="l" then oper=rl
+14120 on lowc gosub 14200, 14201, 14202, 14203, 14204
+14130 oper2=oper
+14140 print hex$(FNldrr(oper1, oper2))
+14150 end
+14200 oper=ra:return
+14201 oper=rb:return
+14202 oper=rc:return
+14203 oper=rd:return
+14204 oper=re:return
+
+run

@@ -1,17 +1,33 @@
 10 ' label: ld   a , l 
+20 ' ld a,ixh
+30 ' ld ixh,a
+40 ' ld ixh, ixl
+50 ' ld ixl,ixh
+60 ' ld iyh,iyl
+70 ' ld iyl,iyh
+80 ' ld a, 100
+90 ' ld a,(hl)
+1000 ' ld x,(xy)
 
 10000 ' operand codes
 10010 cnz=0:cz=1:cnc=2:cc=3:cpo=4:cpe=5:cp=6:cm=7
-10020 irx=0:iry=1
+10020 rix=0:riy=6:rih=0:ril=1
 10030 rpbc=0:rpde=1:rphl=2:rpaf=3
 10040 rwbc=0:rwde=1:rwhlixiy=3:rwsp=4
 10050 ra=7:rb=0:rc=1:rd=2:re=3:rh=4:rl=5
 10100 ' opcode functions
 10110 DEF FNfoct(x)=x*8
-10120 DEF FNldrr(a,b)=64 OR FNFoct(a) or b
-10130 DEF FNldrn(r,n)=(6 OR FNFoct(r))*256 + n
+10120 DEF FNldrr(r1,r2)=64 OR FNfoct(r1) or r2
+10130 DEF FNldrj(r,xy,hl)=(221 or xy)*256 + (68 or FNfoct(r) or hl)
+10140 DEF FNldjr(r,xy,hl)=(221 or xy)*256 + (96 or r or FNfoct(hl))
+10150 DEF FNldrn(r,n)=(6 OR FNfoct(r))*256 + n
+10160 DEF FNldrhl(r)=70 OR FNfoct(r)
 
-10900 dim stmt$(10)
+10400 DEF FNisR(r$)=(asc(r$)>=97 and asc(r$)<=101) or r$="h" or r$="l"
+10410 DEF FNisJ(j$)=j$="ixh" or j$="ixl" or j$="iyh" or j$="iyl"
+10420 DEF FNisN(n$)=n$="0" or n$="00" or (val(n$)>0 and val(n$)<=255) ' TODO improve reliability
+
+10900 dim stmt$(3)
 10910 stmti=1
 10920 lex$=""
 10930 label=0 ' -1 (true) if line has a label
@@ -22,57 +38,84 @@
 11030 if peek(i+3) > 0 then l = peek(i+3) * 256
 11040 l = l + peek(i+2)
 11050 if l > 9999 then end
-11060 print using "line: #####";l
-11070 while not (peek(i) = 197 or peek(i) = 192)
-11080 i = i + 1
-11090 wend
-11100 i = i + 2
-11110 while not peek(i) = 0
-11120 arg1$ = chr$(peek(i))
-11130 gosub 12000
-11140 i = i + 1
-11150 wend
-11160 if len(lex$)>0 then gosub 13000
-11170 if stmt$(1) = "ld" then gosub 14000
-11180 i = i + 1
-11190 goto 11020
-11200 end
+11060 while not (peek(i) = 197 or peek(i) = 192)
+11070 i = i + 1
+11080 wend
+11090 i = i + 2
+11100 while not peek(i) = 0
+11110 arg1$ = chr$(peek(i))
+11120 gosub 12000
+11130 i = i + 1
+11140 wend
+11150 if len(lex$)>0 then gosub 13000
+11160 if stmt$(1) = "ld" then gosub 14000
+11170 if stmt$(0)="" then label$="" else label$=stmt$(0)+":"
+11180 print using "#### \      \ \       \ & &,&";l;hex$(opc);label$;stmt$(1);stmt$(2);stmt$(3)
+11190 stmt$(0)="":stmt$(1)="":stmt$(2)="":stmt$(3)="":stmti=1
+11200 i = i + 1
+11210 goto 11020
+11999 end
 
 12000 ' lex(char arg1)
-12005 print "process: " + arg1$
 12010 if not (arg1$=" " or arg1$=",") then lex$=lex$+arg1$ : return
 12020 if len(lex$) = 0 then return else gosub 13000
 12030 return
 
 13000 ' procesLexeme
-13005 print "lexeme: " + lex$
 13010 if right$(lex$, 1) = ":" then stmt$(0) = left$(lex$, len(lex$)-1) : label = -1 : lex$="" : return
-13020 stmt$(stmti) = lex$
-13030 lex$=""
-13040 stmti=stmti + 1
-13050 return
+13020 stmt$(stmti) = lex$ : lex$=""
+13030 stmti=stmti + 1
+13040 return
 
-14000 ' process ld
-14001 print "process ld"
-14010 oper1=0
-14020 oper2=0
-14030 lowc=asc(stmt$(2))-96
-14040 oper = 0
-14050 if stmt$(1)="h" then oper=rh
-14060 if stmt$(1)="l" then oper=rl
-14070 on lowc gosub 14200, 14201, 14202, 14203, 14204
-14080 oper1=oper
-14090 lowc=asc(stmt$(3))-96
-14100 if stmt$(2)="h" then oper=rh
-14110 if stmt$(2)="l" then oper=rl
-14120 on lowc gosub 14200, 14201, 14202, 14203, 14204
-14130 oper2=oper
-14140 print hex$(FNldrr(oper1, oper2))
-14150 end
-14200 oper=ra:return
-14201 oper=rb:return
-14202 oper=rc:return
-14203 oper=rd:return
-14204 oper=re:return
+14000 ' ld
+14001 if FNisR(stmt$(2)) and FNisR(stmt$(3)) then goto 14100 ' ldrr
+14002 if FNisR(stmt$(2)) and FNisJ(stmt$(3)) then goto 14103 ' ldrj
+14003 if FNisJ(stmt$(2)) and FNisR(stmt$(3)) then goto 14106 ' ldjr
+14004 if stmt$(2)="ixh" and stmt$(3)="ixl" then opc = 222*256 + 101 : return
+14005 if stmt$(2)="ixl" and stmt$(3)="ixh" then opc = 222*256 + 108 : return
+14006 if stmt$(2)="iyh" and stmt$(3)="iyl" then opc = 253*256 + 101 : return
+14007 if stmt$(2)="iyl" and stmt$(3)="iyh" then opc = 253*256 + 108 : return
+14008 if FNisR(stmt$(2)) and FNisN(stmt$(3)) then goto 14109 ' ldrn
+14009 if FNisR(stmt$(2)) and stmt$(3)="(hl)" then goto 14111 ' ldrhl
 
+14096 if stmt$(0)="" then label$="" else label$=stmt$(0)+":"
+14097 print "Illegal instruction:"
+14098 print using "#### \       \ & &,&";l;label$;stmt$(1);stmt$(2);stmt$(3)
+14099 end
+
+14100 arg1$=stmt$(2) : gosub 20000 : oper1 = ret
+14101 arg1$=stmt$(3) : gosub 20000 : oper2 = ret
+14102 opc = FNldrr(oper1, oper2) : return
+14103 arg1$=stmt$(2) : gosub 20000 : oper1 = ret
+14104 arg1$=stmt$(3) : gosub 20010 : oper2xy=retxy : oper2hl=rethl
+14105 opc = FNldrj(oper1, oper2xy, oper2hl) : return
+14106 arg1$=stmt$(3) : gosub 20000 : oper1 = ret
+14107 arg1$=stmt$(2) : gosub 20010 : oper2xy=retxy : oper2hl=rethl
+14108 opc = FNldjr(oper1, oper2xy, oper2hl) : return
+14109 arg1$=stmt$(2) : gosub 20000 : oper1 = ret
+14110 opc = FNldrn(oper1, val(stmt$(3))) : return
+14111 arg1$=stmt$(2) : gosub 20000 : oper1 = ret
+14112 opc = FNldrhl(oper1) : return
+
+
+14999 opc = 0 : return
+
+20000 ' getR(arg1$) -> R
+20001 if arg1$="a" then ret=ra: return
+20002 if arg1$="b" then ret=rb: return
+20003 if arg1$="c" then ret=rc: return
+20004 if arg1$="d" then ret=rd: return
+20005 if arg1$="e" then ret=re: return
+20006 if arg1$="h" then ret=rh: return
+20007 if arg1$="l" then ret=rl: return
+20008 ret=-1: return
+
+20010 ' getHIR(arg1$) -> xy, hl
+20011 if arg1$="ixh" then retxy=rix:rethl=rih: return
+20012 if arg1$="ixl" then retxy=rix:rethl=ril: return
+20013 if arg1$="iyh" then retxy=riy:rethl=rih: return
+20014 if arg1$="iyl" then retxy=riy:rethl=ril: return
+20015 retxy=-1: return
+
+clg
 run

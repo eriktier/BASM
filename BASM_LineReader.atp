@@ -1,12 +1,13 @@
-10 ' label: ld   a , l 
-20 ' ld a,ixh
-30 ' ld ixh,a
-40 ' ld ixh, ixl
-50 ' ld ixl,ixh
-60 ' ld iyh,iyl
-70 ' ld iyl,iyh
-80 ' ld a, 100
-90 ' ld a,(hl)
+10 ' org &8100
+20 ' label: ld   a , l 
+30 ' ld a,ixh
+40 ' ld ixh,a
+50 ' ld ixh, ixl
+60 ' ld ixl,ixh
+70 ' ld iyh,iyl
+80 ' ld iyl,iyh
+90 ' ld a, 100
+100 ' ld a,(hl)
 1000 ' ld x,(xy)
 
 10000 ' pre-declare vars
@@ -16,6 +17,7 @@
 10004 arg1$="":ret=0:ret$=""             ' std sub args and return
 10005 oper1=0:oper2=0:oper2xy=0:operhl=0 ' tmp operand codes
 10006 opc=0                              ' opcode
+10007 opa=&8000                         
 
 10010 ' operand codes
 10011 cnz=0:cz=1:cnc=2:cc=3:cpo=4:cpe=5:cp=6:cm=7
@@ -30,7 +32,8 @@
 10100 ' operand type checks
 10101 DEF FNisR(r$)=(asc(r$)>=97 and asc(r$)<=101) or r$="h" or r$="l"
 10102 DEF FNisJ(j$)=j$="ixh" or j$="ixl" or j$="iyh" or j$="iyl"
-10103 DEF FNisN(n$)=n$="0" or n$="00" or (val(n$)>0 and val(n$)<=255) ' TODO improve reliability
+10103 DEF FNisN(n$)=n$="0" or n$="00" or (val(n$)>0 and val(n$)<=&FF) ' TODO improve reliability
+10104 DEF FNisA(n$)=n$="&0" or n$="&00" or n$="&0000" or (val(n$)>0 and val(n$)<=32767) or (val(n$)<0 and val(n$)>=-32767) ' TODO improve reliability
 
 11000 ' asm main loop
 11010 l=0
@@ -48,11 +51,12 @@
 11130 wend
 11140 if len(lex$)>0 then gosub 13000
 11150 if stmt$(1) = "ld" then gosub 14000
+11155 if stmt$(1) = "org" then gosub 13100
 11160 if stmt$(0)="" then label$="" else label$=stmt$(0)+":"
 11170 print using "#### \      \ \       \ & &,&";l;hex$(opc);label$;stmt$(1);stmt$(2);stmt$(3)
 11180 stmt$(0)="":stmt$(1)="":stmt$(2)="":stmt$(3)="":stmti=1
 11190 i = i + 1
-11200 goto 11000
+11200 goto 11010
 11999 end
 
 12000 ' lex(char arg1)
@@ -66,6 +70,10 @@
 13030 stmti=stmti + 1
 13040 return
 
+13100 ' org
+13101 if FNisA(stmt$(2)) then opa = val(stmt$(2)): return
+13102 goto 20100
+
 14000 ' ld
 14001 if FNisR(stmt$(2)) and FNisR(stmt$(3)) then goto 14100 ' ldrr
 14002 if FNisR(stmt$(2)) and FNisJ(stmt$(3)) then goto 14103 ' ldrj
@@ -76,11 +84,7 @@
 14007 if stmt$(2)="iyl" and stmt$(3)="iyh" then opc = 253*256 + 108 : return
 14008 if FNisR(stmt$(2)) and FNisN(stmt$(3)) then goto 14109 ' ldrn
 14009 if FNisR(stmt$(2)) and stmt$(3)="(hl)" then goto 14111 ' ldrhl
-
-14096 if stmt$(0)="" then label$="" else label$=stmt$(0)+":"
-14097 print "Illegal instruction:"
-14098 print using "#### \       \ & &,&";l;label$;stmt$(1);stmt$(2);stmt$(3)
-14099 end
+14099 goto 20100
 
 14100 arg1$=stmt$(2) : gosub 20000 : oper1 = ret
 14101 arg1$=stmt$(3) : gosub 20000 : oper2 = ret
@@ -95,9 +99,6 @@
 14110 opc = (6 OR FNfoct(ret))*256 + val(stmt$(3)) : return
 14111 arg1$=stmt$(2) : gosub 20000
 14112 opc = 70 OR FNfoct(ret) : return
-
-
-14999 opc = 0 : return
 
 20000 ' getR(arg1$) -> R
 20001 if arg1$="a" then ret=ra: return
@@ -115,6 +116,12 @@
 20013 if arg1$="iyh" then retxy=riy:rethl=rih: return
 20014 if arg1$="iyl" then retxy=riy:rethl=ril: return
 20015 retxy=-1: return
+
+20100 ' ill inst error
+20110 if stmt$(0)="" then label$="" else label$=stmt$(0)+":"
+20120 print "Illegal instruction:"
+20130 print using "#### \       \ & &,&";l;label$;stmt$(1);stmt$(2);stmt$(3)
+20140 end
 
 clg
 run

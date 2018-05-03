@@ -40,3 +40,9 @@ The resulting output (currently just pretty printing):
 And the machine code in memory:
 
 ![screenshot](https://user-images.githubusercontent.com/796635/39574275-734324dc-4ece-11e8-9918-98d7b6eb835f.png)
+
+# first test case
+
+BASM now succesfully assembles and runs the first code example from: http://www.chibiakumas.com/z80/.
+
+![screenshot](https://user-images.githubusercontent.com/796635/39595755-42b755f6-4f08-11e8-9e71-00609f55870d.png)

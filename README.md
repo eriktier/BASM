@@ -21,15 +21,16 @@ Anyway, my plan is to complete BASM and to then write a simple game using it ;).
 
 The current version is able to parse and generate opcodes for the following kind of 'ld' instructions:
 <pre>
-10 ' label: ld   a , l 
-20 ' ld a,ixh
-30 ' ld ixh,a
-40 ' ld ixh, ixl
-50 ' ld ixl,ixh
-60 ' ld iyh,iyl
-70 ' ld iyl,iyh
-80 ' ld a, 100
-90 ' ld a,(hl)
+10 ' org &8100
+20 ' label: ld   a , l 
+30 ' ld a,ixh
+40 ' ld ixh,a
+50 ' ld ixh, ixl
+60 ' ld ixl,ixh
+70 ' ld iyh,iyl
+80 ' ld iyl,iyh
+90 ' ld a, 100
+100 ' ld a,(hl)
 1000 ' ld x,(xy)
 </pre>
 The resulting output (currently just pretty printing):

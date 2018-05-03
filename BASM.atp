@@ -8,7 +8,10 @@
 80 ' ld iyl,iyh
 90 ' ld a, 100
 100 ' ld a,(hl)
-1000 ' ld x,(xy)
+110 ' inc a
+120 ' add b
+130 ' ld (&7000),a
+140 ' ret
 
 10000 ' pre-declare vars
 10001 i=&170:l=0                         ' basic start address & line number
@@ -28,18 +31,20 @@
 
 10020 ' opcode functions
 10021 DEF FNfoct(x)=x*8
+10022 DEF FNindV(i$)=mid$(i$, 2, len(i$)-2)
 
 10100 ' operand type checks
 10101 DEF FNisR(r$)=(asc(r$)>=97 and asc(r$)<=101) or r$="h" or r$="l"
 10102 DEF FNisJ(j$)=j$="ixh" or j$="ixl" or j$="iyh" or j$="iyl"
 10103 DEF FNisN(n$)=n$="0" or n$="00" or (val(n$)>0 and val(n$)<=&FF) ' TODO improve reliability
 10104 DEF FNisA(n$)=n$="&0" or n$="&00" or n$="&0000" or (val(n$)>0 and val(n$)<=32767) or (val(n$)<0 and val(n$)>=-32767) ' TODO improve reliability
+10105 DEF FNisIndA(i$)=left$(i$,1)="(" and right$(i$, 1)=")" and FNisA(mid$(i$, 2, len(i$)-2))
 
-11000 ' asm main loop
+11100 ' asm main loop
 11010 l=0
 11020 if peek(i+3) > 0 then l = peek(i+3) * 256
 11030 l = l + peek(i+2)
-11040 if l > 9999 then end
+11040 if l > 9999 then goto 11900
 11050 while not (peek(i) = 197 or peek(i) = 192)
 11060   i = i + 1
 11070 wend
@@ -50,25 +55,31 @@
 11120   i = i + 1
 11130 wend
 11140 if len(lex$)>0 then gosub 13000
-11150 if stmt$(1) = "ld" then gosub 14000
-11155 if stmt$(1) = "org" then gosub 13100
-11160 if stmt$(0)="" then label$="" else label$=stmt$(0)+":"
-11170 opc$=""
-11180 if opc1>-1 then opc$=hex$(opc1)
-11190 if opc2>-1 then opc$=opc$+hex$(opc2)
-11200 if opc3>-1 then opc$=opc$+hex$(opc3)
-11210 if opc4>-1 then opc$=opc$+hex$(opc4)
-11220 print using "#### \      \ \       \ & &,&";l;opc$;label$;stmt$(1);stmt$(2);stmt$(3)
-11230 if opc1>-1 then poke opa, opc1 : opa = opa + 1
-11240 if opc2>-1 then poke opa, opc2 : opa = opa + 1
-11250 if opc3>-1 then poke opa, opc3 : opa = opa + 1
-11260 if opc4>-1 then poke opa, opc4 : opa = opa + 1
-11270 stmt$(0)="":stmt$(1)="":stmt$(2)="":stmt$(3)="":stmti=1
-11280 opc1=-1:opc2=-1:opc3=-1:opc4=-1
-11290 i = i + 1
-11300 goto 11010
-11310 if saddr=&FFFF then saddr=opa
-11320 'call saddr
+11150 if stmt$(0)="" then label$="" else label$=stmt$(0)+":"
+11160 if stmt$(1) = "org" then gosub 13100
+11170 if stmt$(1) = "add" then gosub 13110
+11180 if stmt$(1) = "ld" then gosub 14000
+11190 if stmt$(1) = "inc" then gosub 15000
+11200 if stmt$(1) = "ret" then opc1=201
+11570 opc$=""
+11500 if opc1>-1 then opc$=hex$(opc1)
+11510 if opc2>-1 then opc$=opc$+hex$(opc2)
+11520 if opc3>-1 then opc$=opc$+hex$(opc3)
+11530 if opc4>-1 then opc$=opc$+hex$(opc4)
+11540 print using "#### \      \ \       \ & &,&";l;opc$;label$;stmt$(1);stmt$(2);stmt$(3)
+11550 if opc1>-1 then poke opa, opc1 : opa = opa + 1
+11560 if opc2>-1 then poke opa, opc2 : opa = opa + 1
+11570 if opc3>-1 then poke opa, opc3 : opa = opa + 1
+11580 if opc4>-1 then poke opa, opc4 : opa = opa + 1
+11600 stmt$(0)="":stmt$(1)="":stmt$(2)="":stmt$(3)="":stmti=1
+11610 opc1=-1:opc2=-1:opc3=-1:opc4=-1
+11620 i = i + 1
+11630 goto 11010
+
+11900 print "highest basic addr: " + hex$(himem)
+11910 print "free memory: " + dec$(fre(0)/1024, "##.##") + "KB"
+11920 if saddr=&FFFF then saddr=opa
+11930 call saddr
 11999 end
 
 12000 ' lex(char arg1)
@@ -87,6 +98,17 @@
 13102 if saddr=&FFFF then saddr=opa
 13103 return
 
+13110 ' add
+13111 if stmt$(2)="a" then goto 13112 else goto 13114
+13112 if stmt$(3)="" then goto 20100
+13113 if FNisR(stmt$(3)) then stmt$(2) = stmt$(3) : goto 13120
+13114 if FNisR(stmt$(2)) then goto 13120
+
+13119 goto 20100
+
+13120 arg1$=stmt$(2) : gosub 20000
+13122 opc1 = (128 OR ret) : return
+
 14000 ' ld
 14001 if FNisR(stmt$(2)) and FNisR(stmt$(3)) then goto 14100 ' ldrr
 14002 if FNisR(stmt$(2)) and FNisJ(stmt$(3)) then goto 14103 ' ldrj
@@ -97,6 +119,7 @@
 14007 if stmt$(2)="iyl" and stmt$(3)="iyh" then opc1=253 : opc2=108 : return
 14008 if FNisR(stmt$(2)) and FNisN(stmt$(3)) then goto 14109 ' ldrn
 14009 if FNisR(stmt$(2)) and stmt$(3)="(hl)" then goto 14111 ' ldrhl
+14010 if FNisIndA(stmt$(2)) and stmt$(3)="a" then goto 14113 
 14099 goto 20100
 
 14100 arg1$=stmt$(2) : gosub 20000 : oper1 = ret
@@ -112,6 +135,12 @@
 14110 opc1 = (6 OR FNfoct(ret)):opc2=val(stmt$(3)) : return
 14111 arg1$=stmt$(2) : gosub 20000
 14112 opc1 = 70 OR FNfoct(ret) : return
+14113 indv$ = mid$(stmt$(2), 2, len(stmt$(2))-2)
+14114 opc1 = 50: opc2=val(indv$) and &FF: opc3=val(indv$)/256 : return
+
+15000 ' inc
+15010 arg1$=stmt$(2) : gosub 20000
+15020 if FNisR(stmt$(2)) then opc1=4 or FNfoct(ret) : return
 
 20000 ' getR(arg1$) -> R
 20001 if arg1$="a" then ret=ra: return

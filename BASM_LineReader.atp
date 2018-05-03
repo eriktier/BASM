@@ -17,11 +17,6 @@
 10050 ra=7:rb=0:rc=1:rd=2:re=3:rh=4:rl=5
 10100 ' opcode functions
 10110 DEF FNfoct(x)=x*8
-10120 DEF FNldrr(r1,r2)=64 OR FNfoct(r1) or r2
-10130 DEF FNldrj(r,xy,hl)=(221 or xy)*256 + (68 or FNfoct(r) or hl)
-10140 DEF FNldjr(r,xy,hl)=(221 or xy)*256 + (96 or r or FNfoct(hl))
-10150 DEF FNldrn(r,n)=(6 OR FNfoct(r))*256 + n
-10160 DEF FNldrhl(r)=70 OR FNfoct(r)
 
 10400 DEF FNisR(r$)=(asc(r$)>=97 and asc(r$)<=101) or r$="h" or r$="l"
 10410 DEF FNisJ(j$)=j$="ixh" or j$="ixl" or j$="iyh" or j$="iyl"
@@ -39,13 +34,13 @@
 11040 l = l + peek(i+2)
 11050 if l > 9999 then end
 11060 while not (peek(i) = 197 or peek(i) = 192)
-11070 i = i + 1
+11070   i = i + 1
 11080 wend
 11090 i = i + 2
 11100 while not peek(i) = 0
-11110 arg1$ = chr$(peek(i))
-11120 gosub 12000
-11130 i = i + 1
+11110   arg1$ = chr$(peek(i))
+11120   gosub 12000
+11130   i = i + 1
 11140 wend
 11150 if len(lex$)>0 then gosub 13000
 11160 if stmt$(1) = "ld" then gosub 14000
@@ -85,17 +80,17 @@
 
 14100 arg1$=stmt$(2) : gosub 20000 : oper1 = ret
 14101 arg1$=stmt$(3) : gosub 20000 : oper2 = ret
-14102 opc = FNldrr(oper1, oper2) : return
+14102 opc = 64 OR FNfoct(oper1) or oper2 : return
 14103 arg1$=stmt$(2) : gosub 20000 : oper1 = ret
 14104 arg1$=stmt$(3) : gosub 20010 : oper2xy=retxy : oper2hl=rethl
-14105 opc = FNldrj(oper1, oper2xy, oper2hl) : return
+14105 opc = (221 or oper2xy)*256 + (68 or FNfoct(oper1) or oper2hl) : return
 14106 arg1$=stmt$(3) : gosub 20000 : oper1 = ret
 14107 arg1$=stmt$(2) : gosub 20010 : oper2xy=retxy : oper2hl=rethl
-14108 opc = FNldjr(oper1, oper2xy, oper2hl) : return
-14109 arg1$=stmt$(2) : gosub 20000 : oper1 = ret
-14110 opc = FNldrn(oper1, val(stmt$(3))) : return
-14111 arg1$=stmt$(2) : gosub 20000 : oper1 = ret
-14112 opc = FNldrhl(oper1) : return
+14108 opc = (221 or oper2xy)*256 + (96 or oper1 or FNfoct(operhl)) : return
+14109 arg1$=stmt$(2) : gosub 20000
+14110 opc = (6 OR FNfoct(ret))*256 + val(stmt$(3)) : return
+14111 arg1$=stmt$(2) : gosub 20000
+14112 opc = 70 OR FNfoct(ret) : return
 
 
 14999 opc = 0 : return

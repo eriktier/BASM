@@ -46,3 +46,13 @@ And the machine code in memory:
 BASM now succesfully assembles and runs the first code example from: http://www.chibiakumas.com/z80/.
 
 ![screenshot](https://user-images.githubusercontent.com/796635/39595755-42b755f6-4f08-11e8-9e71-00609f55870d.png)
+
+## How to run
+
+First you need to download winape: http://www.winape.net.
+
+Clone this repo, run winape and open BASM.atp through: File/Auto type...
+
+Once the Auto type window shows the file click ok and it will 'type' the full code and run it using the built-in test asm.
+
+You can open the tests by opening them in Autotype. They will overwrite the asm code in the first lines. Then just type run to run the assembler and the assembled code.

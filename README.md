@@ -17,7 +17,7 @@ As a personal hobby project I decided that I'd try to reconstruct this tool, usi
 
 Anyway, my plan is to complete BASM and to then write a simple game using it ;).
 
-# output of current version
+## Output of current version
 
 The current version is able to parse and generate opcodes for the following kind of 'ld' instructions:
 <pre>
@@ -41,7 +41,7 @@ And the machine code in memory:
 
 ![screenshot](https://user-images.githubusercontent.com/796635/39574275-734324dc-4ece-11e8-9918-98d7b6eb835f.png)
 
-# first test case
+## First test case
 
 BASM now succesfully assembles and runs the first code example from: http://www.chibiakumas.com/z80/.
 

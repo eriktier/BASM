@@ -34,4 +34,9 @@ The current version is able to parse and generate opcodes for the following kind
 </pre>
 The resulting output (currently just pretty printing):
 
-![screenshot](https://user-images.githubusercontent.com/796635/39554547-5c3903e6-4e6b-11e8-8396-d6d07b5494b8.png)
+![screenshot](https://user-images.githubusercontent.com/796635/39574275-734324dc-4ece-11e8-9918-98d7b6eb835f.png)
+
+And the machine code in memory:
+
+![screenshot](https://user-images.githubusercontent.com/796635/39574287-800c5012-4ece-11e8-9302-b8b6ead3ab96.png)
+

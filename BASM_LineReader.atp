@@ -9,46 +9,50 @@
 90 ' ld a,(hl)
 1000 ' ld x,(xy)
 
-10000 ' operand codes
-10010 cnz=0:cz=1:cnc=2:cc=3:cpo=4:cpe=5:cp=6:cm=7
-10020 rix=0:riy=6:rih=0:ril=1
-10030 rpbc=0:rpde=1:rphl=2:rpaf=3
-10040 rwbc=0:rwde=1:rwhlixiy=3:rwsp=4
-10050 ra=7:rb=0:rc=1:rd=2:re=3:rh=4:rl=5
-10100 ' opcode functions
-10110 DEF FNfoct(x)=x*8
+10000 ' pre-declare vars
+10001 i=&170:l=0                         ' basic start address & line number
+10002 dim stmt$(3):stmti=1:lex$=""       ' lexer vars
+10003 label=0:label$=""                  ' tmp label vars
+10004 arg1$="":ret=0:ret$=""             ' std sub args and return
+10005 oper1=0:oper2=0:oper2xy=0:operhl=0 ' tmp operand codes
+10006 opc=0                              ' opcode
 
-10400 DEF FNisR(r$)=(asc(r$)>=97 and asc(r$)<=101) or r$="h" or r$="l"
-10410 DEF FNisJ(j$)=j$="ixh" or j$="ixl" or j$="iyh" or j$="iyl"
-10420 DEF FNisN(n$)=n$="0" or n$="00" or (val(n$)>0 and val(n$)<=255) ' TODO improve reliability
+10010 ' operand codes
+10011 cnz=0:cz=1:cnc=2:cc=3:cpo=4:cpe=5:cp=6:cm=7
+10012 rix=0:riy=6:rih=0:ril=1
+10013 rpbc=0:rpde=1:rphl=2:rpaf=3
+10014 rwbc=0:rwde=1:rwhlixiy=3:rwsp=4
+10015 ra=7:rb=0:rc=1:rd=2:re=3:rh=4:rl=5
 
-10900 dim stmt$(3)
-10910 stmti=1
-10920 lex$=""
-10930 label=0 ' -1 (true) if line has a label
+10020 ' opcode functions
+10021 DEF FNfoct(x)=x*8
 
-11000 ' asm line reader
-11010 i = &170
-11020 l = 0
-11030 if peek(i+3) > 0 then l = peek(i+3) * 256
-11040 l = l + peek(i+2)
-11050 if l > 9999 then end
-11060 while not (peek(i) = 197 or peek(i) = 192)
-11070   i = i + 1
-11080 wend
-11090 i = i + 2
-11100 while not peek(i) = 0
-11110   arg1$ = chr$(peek(i))
-11120   gosub 12000
-11130   i = i + 1
-11140 wend
-11150 if len(lex$)>0 then gosub 13000
-11160 if stmt$(1) = "ld" then gosub 14000
-11170 if stmt$(0)="" then label$="" else label$=stmt$(0)+":"
-11180 print using "#### \      \ \       \ & &,&";l;hex$(opc);label$;stmt$(1);stmt$(2);stmt$(3)
-11190 stmt$(0)="":stmt$(1)="":stmt$(2)="":stmt$(3)="":stmti=1
-11200 i = i + 1
-11210 goto 11020
+10100 ' operand type checks
+10101 DEF FNisR(r$)=(asc(r$)>=97 and asc(r$)<=101) or r$="h" or r$="l"
+10102 DEF FNisJ(j$)=j$="ixh" or j$="ixl" or j$="iyh" or j$="iyl"
+10103 DEF FNisN(n$)=n$="0" or n$="00" or (val(n$)>0 and val(n$)<=255) ' TODO improve reliability
+
+11000 ' asm main loop
+11010 l=0
+11020 if peek(i+3) > 0 then l = peek(i+3) * 256
+11030 l = l + peek(i+2)
+11040 if l > 9999 then end
+11050 while not (peek(i) = 197 or peek(i) = 192)
+11060   i = i + 1
+11070 wend
+11080 i = i + 2
+11090 while not peek(i) = 0
+11100   arg1$ = chr$(peek(i))
+11110   gosub 12000
+11120   i = i + 1
+11130 wend
+11140 if len(lex$)>0 then gosub 13000
+11150 if stmt$(1) = "ld" then gosub 14000
+11160 if stmt$(0)="" then label$="" else label$=stmt$(0)+":"
+11170 print using "#### \      \ \       \ & &,&";l;hex$(opc);label$;stmt$(1);stmt$(2);stmt$(3)
+11180 stmt$(0)="":stmt$(1)="":stmt$(2)="":stmt$(3)="":stmti=1
+11190 i = i + 1
+11200 goto 11000
 11999 end
 
 12000 ' lex(char arg1)

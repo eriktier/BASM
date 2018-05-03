@@ -3,7 +3,7 @@ Inline Basic Z80 assembler for CPC464 and later home computers
 
 This is a reproduction (from 30+ old memory) of the first z80 'assembler' that I've ever used (when I was somewhere between 12-14 years old).
 
-Somewhere during that time, I found the basic code for the assembler in some magazine (and had to type it all in manually). It allowed the assembler code to be written in the first 9999 lines of the basic program behind "rem" (comments) statements. The assembler itself started at line 10000 (or so) and it would read (using peek statements) the comments from line 0 up to 9999, parse the asm code, generate the opcodes, poke them into memory from the address specified by an 'org' statement and then call that address.
+Somewhere during that time, I found the basic code for the assembler in some magazine (and had to type it all in manually). It allowed the assembler code to be written in the first 9999 lines of the basic program behind "rem" (or "'") statements (comments). The assembler itself started at line 10000 (or so) and it would read (using peek statements) the comments from line 0 up to 9999, parse the asm code, generate the opcodes, poke them into memory from the address specified by an 'org' statement and then call that address.
 
 This would run the assembled machine code. This allowed full use of the basic editor of the CPC464 (or newer), which alleviated the need for writing a full editor (though things like syntax highlighting were missing of course).
 

@@ -61,6 +61,9 @@
 11160 if stmt$(1)="org" then gosub 13100
 11170 if stmt$(1)="add" then gosub 13110
 11180 if stmt$(1)="ld" then gosub 14000
+11181 if stmt$(1)="ldd" then 'opc1%=237:opc2%=176
+11181 if stmt$(1)="lddr" then 'opc1%=237:opc2%=176
+11181 if stmt$(1)="ldi" then 'opc1%=237:opc2%=176
 11181 if stmt$(1)="ldir" then opc1%=237:opc2%=176
 11190 if stmt$(1)="inc" then gosub 15000
 11200 if stmt$(1)="ret" then opc1%=201
@@ -112,23 +115,44 @@
 13122 opc1%=(128 OR ret%):return
 
 14000 ' ld
-14001 if FNisR(stmt$(2)) and FNisR(stmt$(3)) then goto 14100 ' ldrr
-14002 if FNisR(stmt$(2)) and FNisJ(stmt$(3)) then goto 14103 ' ldrj
-14003 if FNisJ(stmt$(2)) and FNisR(stmt$(3)) then goto 14106 ' ldjr
+14001 if FNisR(stmt$(2)) and FNisR(stmt$(3)) then goto 14036 'RR
+14002 if FNisR(stmt$(2)) and FNisJ(stmt$(3)) then goto 14103 'RJ
+14003 if FNisJ(stmt$(2)) and FNisR(stmt$(3)) then goto 14106 'JR
 14004 if stmt$(2)="ixh" and stmt$(3)="ixl" then opc1%=221:opc2%=101:return
 14005 if stmt$(2)="ixl" and stmt$(3)="ixh" then opc1%=221:opc2%=108:return
 14006 if stmt$(2)="iyh" and stmt$(3)="iyl" then opc1%=253:opc2%=101:return
 14007 if stmt$(2)="iyl" and stmt$(3)="iyh" then opc1%=253:opc2%=108:return
-14008 if FNisR(stmt$(2)) and FNisN(stmt$(3)) then goto 14109 ' ldrn
-14009 if FNisR(stmt$(2)) and stmt$(3)="(hl)" then goto 14111 ' ldrhl
-14010 if stmt$(2)="(hl)" and FNisN(stmt$(3)) then opc1%=54:opc2%=val(stmt$(3)):return
-14011 if FNisIndA(stmt$(2)) and stmt$(3)="a" then goto 14113 
-14012 if FNisQ(stmt$(2)) and FNisA(stmt$(3)) then goto 14116
-14099 goto 20100
-
-14100 arg1$=stmt$(2):gosub 20000:oper1%=ret%
-14101 arg1$=stmt$(3):gosub 20000:oper2%=ret%
-14102 opc1%=64 OR FNfoct(oper1%) or oper2%:return
+14008 if FNisR(stmt$(2)) and FNisN(stmt$(3)) then goto 14109 'RN
+14009 if FNisR(stmt$(2)) and stmt$(3)="(hl)" then goto 14111 'R(hl)
+14010 'R(I+D)
+14011 '(hl)R
+14012 if stmt$(2)="(hl)" and FNisN(stmt$(3)) then opc1%=54:opc2%=val(stmt$(3)):return '(hl)N
+14013 '(I+D)R
+14014 '(I+D)N
+14015 'a(bc)
+14016 'a(de)
+14017 'a(A)
+14018 '(bc)a
+14019 '(de)a
+14020 if FNisIndA(stmt$(2)) and stmt$(3)="a" then goto 14113 '(A)a
+14021 'ia
+14022 'ra
+14023 'ai
+14024 'ar
+14025 if FNisQ(stmt$(2)) and FNisA(stmt$(3)) then goto 14116 'QA
+14026 'IA
+14027 'Q(A)
+14028 'hl(A)
+14029 'I(A)
+14030 '(A)Q
+14031 '(A)hl
+14032 '(A)I
+14033 'sphl
+14034 'spI
+14035 goto 20100
+14036 arg1$=stmt$(2):gosub 20000:oper1%=ret%
+14037 arg1$=stmt$(3):gosub 20000:oper2%=ret%
+14038 opc1%=64 OR FNfoct(oper1%) or oper2%:return
 14103 arg1$=stmt$(2):gosub 20000:oper1%=ret%
 14104 arg1$=stmt$(3):gosub 20010:oper2xy%=retxy%:oper2hl%=rethl%
 14105 opc1%=221 or oper2xy%:opc2%=68 or FNfoct(oper1%) or oper2hl%:return

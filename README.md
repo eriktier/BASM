@@ -41,9 +41,9 @@ And the machine code in memory:
 
 ![screenshot](https://user-images.githubusercontent.com/796635/39574275-734324dc-4ece-11e8-9918-98d7b6eb835f.png)
 
-## First test case
+## Test filers
 
-BASM now succesfully assembles and runs the first code example from: http://www.chibiakumas.com/z80/.
+BASM now succesfully assembles and runs the first 3 code examples from: http://www.chibiakumas.com/z80/.
 
 ![screenshot](https://user-images.githubusercontent.com/796635/39595755-42b755f6-4f08-11e8-9e71-00609f55870d.png)
 
@@ -54,9 +54,15 @@ First you need to download winape: http://www.winape.net.
 Clone this repo, run winape and open the basm.dsk file for drive A: using: File/Drive A:/Insert disk image...
 Then you can type the command: load "basm.bas" and then 'run'.
 
-You can 'merge' the test files on the disk image to run specific tests using the command: merge "test1.bas". This will overwrite the 'built-in' test in basm.bas. Run again and now the test should assemble and run.
+You can 'merge' the test files on the disk image to run specific tests using the command: merge "test1.bas". This will overwrite the 'built-in' test in basm.bas. Run again and now the test should assemble.
+
+There are two run modes:
+1. assemble and print to screen: type 'run'
+2. mode 1 + run: type 'run 10001'
+
+You can ofcourse also just type 'call <address of assembled code>', after running the assembler, to run the assembled program.
 
 Alternatively you can use the BASM.atp file through: File/Auto type...
 Once the Auto type window shows the file, click ok and it will 'type' the full code and run it using the built-in test asm. To speed up the auto typing, first set winape into high speed mode: settings/High Speed (1000%).
 
-You can open the tests by opening them in Autotype as well. They will overwrite the asm code in the first lines. Then just type 'run' to run the assembler and the assembled code.
+You can open the tests by opening them in Autotype as well. They will overwrite the asm code in the first lines. Then just type 'run' to run the assembler.

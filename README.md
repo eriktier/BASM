@@ -51,8 +51,12 @@ BASM now succesfully assembles and runs the first code example from: http://www.
 
 First you need to download winape: http://www.winape.net.
 
-Clone this repo, run winape and open BASM.atp through: File/Auto type...
+Clone this repo, run winape and open the basm.dsk file for drive A: using: File/Drive A:/Insert disk image...
+Then you can type the command: load "basm.bas" and then 'run'.
 
+You can 'merge' the test files on the disk image to run specific tests using the command: merge "test1.bas". This will overwrite the 'built-in' test in basm.bas. Run again and now the test should assemble and run.
+
+Alternatively you can use the BASM.atp file through: File/Auto type...
 Once the Auto type window shows the file, click ok and it will 'type' the full code and run it using the built-in test asm. To speed up the auto typing, first set winape into high speed mode: settings/High Speed (1000%).
 
-You can open the tests by opening them in Autotype. They will overwrite the asm code in the first lines. Then just type 'run' to run the assembler and the assembled code.
+You can open the tests by opening them in Autotype as well. They will overwrite the asm code in the first lines. Then just type 'run' to run the assembler and the assembled code.

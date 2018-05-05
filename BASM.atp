@@ -8,20 +8,28 @@
 80 ' ld iyl,iyh
 90 ' ld a, 100
 100 ' ld a,(hl)
-110 ' inc a
-120 ' add b
-130 ' ld (&7000),a
-140 ' ret
+110 ' ld (hl),a
+120 ' ld (hl),10
+130 ' ld a,(bc)
+140 ' ld a,(de)
+150 ' ld a,(&8000)
+160 ' ld (bc),a
+170 ' ld (de),a
+180 ' ld (&8000),a
+190 ' inc a
+200 ' add b
+410 ' ret
 
-
-10000 ' pre-declare vars
-10001 baddr%=&170:ln=0 ' basic start address & line number
-10002 dim stmt$(3):stmti%=1:lex$="" ' lexer vars
-10003 label=0:label$="" ' tmp label vars
-10004 arg1$="":ret%=0:ret$="" ' std sub args and return
-10005 oper1%=0:oper2%=0:oper2xy%=0:oper2hl%=0 ' tmp operand codes
-10006 opc1%=-1:opc2%=-1:opc3%=-1:opc4%=-1 ' opcode
-10007 opa%=&8000:saddr%=&FFFF                       
+10000 rmode%=1:goto 10002
+10001 rmode%=0
+10002 ' pre-declare vars
+10003 baddr%=&170:ln=0 ' basic start address & line number
+10004 dim stmt$(3):stmti%=1:lex$="" ' lexer vars
+10005 label=0:label$="" ' tmp label vars
+10006 arg1$="":ret%=0:ret$="" ' std sub args and return
+10007 oper1%=0:oper2%=0:oper2xy%=0:oper2hl%=0 ' tmp operand codes
+10008 opc1%=-1:opc2%=-1:opc3%=-1:opc4%=-1 ' opcode
+10009 opa%=&8000:saddr%=&FFFF                       
 
 10010 ' operand codes
 10011 cnz%=0:cz%=1:cnc%=2:cc%=3:cpo%=4:cpe%=5:cp%=6:cm%=7
@@ -38,9 +46,11 @@
 10101 DEF FNisR(r$)=(asc(r$)>=97 and asc(r$)<=101) or r$="h" or r$="l"
 10102 DEF FNisJ(j$)=j$="ixh" or j$="ixl" or j$="iyh" or j$="iyl"
 10103 DEF FNisN(n$)=n$="0" or n$="00" or (val(n$)>0 and val(n$)<=&FF) ' TODO improve reliability
-10104 DEF FNisA(n$)=n$="&0" or n$="&00" or n$="&0000" or (val(n$)>0 and val(n$)<=32767) or (val(n$)<0 and val(n$)>=-32767) ' TODO improve reliability
-10105 DEF FNisIndA(i$)=left$(i$,1)="(" and right$(i$, 1)=")" and FNisA(mid$(i$, 2, len(i$)-2))
-10106 DEF FNisQ(q$)=q$="bc" or q$="de" or q$="hl" or q$="ix" or q$="iy" or q$="sp"
+10104 DEF FNisA(n$)=n$="&0" or n$="&00" or n$="&0000" or (val(n$)>0 and val(n$)<=32767) or (val(n$)<0 and val(n$)>=-32768) ' TODO improve reliability
+10105 DEF FNisInd(i$)=left$(i$,1)="(" and right$(i$, 1)=")"
+10106 DEF FNisIndA(i$)=FNisA(mid$(i$, 2, len(i$)-2))
+10107 DEF FNisQ(q$)=q$="bc" or q$="de" or q$="hl" or q$="ix" or q$="iy" or q$="sp"
+
 
 11000 ' asm main loop
 11010 ln=0
@@ -84,7 +94,8 @@
 11900 print "highest basic addr: " + hex$(himem)
 11910 print "free memory: " + dec$(fre(0)/1024, "##.##") + "KB"
 11920 if saddr%=&FFFF then saddr%=opa%
-11930 call saddr%
+11930 if rmode%=0 then call saddr%
+
 11999 end
 
 12000 ' lex(char arg1)
@@ -125,16 +136,16 @@
 14008 if FNisR(stmt$(2)) and FNisN(stmt$(3)) then goto 14109 'RN
 14009 if FNisR(stmt$(2)) and stmt$(3)="(hl)" then goto 14111 'R(hl)
 14010 'R(I+D)
-14011 '(hl)R
+14011 if stmt$(2)="(hl)" and FNisR(stmt$(3)) then goto 14130 '(hl)R
 14012 if stmt$(2)="(hl)" and FNisN(stmt$(3)) then opc1%=54:opc2%=val(stmt$(3)):return '(hl)N
 14013 '(I+D)R
 14014 '(I+D)N
-14015 'a(bc)
-14016 'a(de)
-14017 'a(A)
-14018 '(bc)a
-14019 '(de)a
-14020 if FNisIndA(stmt$(2)) and stmt$(3)="a" then goto 14113 '(A)a
+14015 if stmt$(2)="a" and stmt$(3)="(bc)" then opc1%=10:return 'a(bc)
+14016 if stmt$(2)="a" and stmt$(3)="(de)" then opc1%=26:return 'a(de)
+14017 if stmt$(2)="a" and FNisInd(stmt$(3)) then if FNisIndA(stmt$(3)) then goto 14113 'a(A)
+14018 if stmt$(2)="(bc)" and stmt$(3)="a" then opc1%=2:return '(bc)a
+14019 if stmt$(2)="(de)" and stmt$(3)="a" then opc1%=18:return '(de)a
+14020 if FNisInd(stmt$(2)) then if FNisIndA(stmt$(2)) and stmt$(3)="a" then goto 14140 '(A)a
 14021 'ia
 14022 'ra
 14023 'ai
@@ -163,12 +174,18 @@
 14110 opc1%=6 OR FNfoct(ret%):opc2%=val(stmt$(3)):return
 14111 arg1$=stmt$(2):gosub 20000
 14112 opc1%=70 OR FNfoct(ret%):return
-14113 indv$=mid$(stmt$(2),2,len(stmt$(2))-2)
-14114 if val(indv$)<0 then addr=abs(-32768+(val(indv$) and &ff00)) else addr=val(indv$)
-14115 opc1%=50:opc2%=val(indv$) and &FF:opc3%=fix(val(indv$)/256):return
+14113 indv$=mid$(stmt$(3),2,len(stmt$(3))-2)
+14114 if val(indv$)<0 then addr=val(indv$)+65536 else addr=val(indv$)
+14115 opc1%=58:opc2%=val(indv$) and &FF:opc3%=fix(addr/256):return
 14116 arg1$=stmt$(2):gosub 20020
-14117 if val(stmt$(3))<0 then addr=abs(-32768+(val(stmt$(3)) and &ff00)) else addr=val(stmt$(3))
+14117 if val(stmt$(3))<0 then addr=val(stmt$(3))+65536 else addr=val(stmt$(3))
 14118 opc1%=1 or ret%:opc2%=val(stmt$(3)) and &FF:opc3%=fix(addr/256):return
+
+14130 arg1$=stmt$(3):gosub 20000
+14131 opc1%=112 or ret%:return
+14140 indv$=mid$(stmt$(2),2,len(stmt$(2))-2)
+14141 if val(indv$)<0 then addr=val(indv$)+65536 else addr=val(indv$)
+14142 opc1%=50:opc2%=val(indv$) and &FF:opc3%=fix(addr/256):return
 
 15000 ' inc
 15010 arg1$=stmt$(2):gosub 20000

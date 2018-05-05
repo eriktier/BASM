@@ -21,23 +21,23 @@
 
 
 10000 ' pre-declare vars
-10001 baddr%=&170:ln%=0                         ' basic start address & line number
+10001 baddr%=&170:ln%=0                   ' basic start address & line number
 10002 dim stmt$(3):stmti%=1:lex$=""       ' lexer vars
-10003 label=0:label$=""                  ' tmp label vars
-10004 arg1$="":ret=0:ret$=""             ' std sub args and return
-10005 oper1=0:oper2=0:oper2xy=0:operhl=0 ' tmp operand codes
-10006 opc1%=-1:opc2%=-1:opc3%=-1:opc4%=-1    ' opcode
+10003 label=0:label$=""                   ' tmp label vars
+10004 arg1$="":ret%=0:ret$=""             ' std sub args and return
+10005 oper1%=0:oper2%=0:oper2xy%=0:oper2hl%=0  ' tmp operand codes
+10006 opc1%=-1:opc2%=-1:opc3%=-1:opc4%=-1 ' opcode
 10007 opa%=&8000:saddr%=&FFFF                       
 
 10010 ' operand codes
-10011 cnz=0:cz=1:cnc=2:cc=3:cpo=4:cpe=5:cp=6:cm=7
-10012 rix=0:riy=6:rih=0:ril=1
-10013 rpbc=0:rpde=1:rphl=2:rpaf=3
-10014 rwbc=0:rwde=16:rwhlixiy=32:rwsp=48
-10015 ra=7:rb=0:rc=1:rd=2:re=3:rh=4:rl=5
+10011 cnz%=0:cz%=1:cnc%=2:cc%=3:cpo%=4:cpe%=5:cp%=6:cm%=7
+10012 rix%=0:riy%=6:rih%=0:ril%=1
+10013 rpbc%=0:rpde%=1:rphl%=2:rpaf%=3
+10014 rwbc%=0:rwde%=16:rwhlixiy%=32:rwsp%=48
+10015 ra%=7:rb%=0:rc%=1:rd%=2:re%=3:rh%=4:rl%=5
 
 10020 ' opcode functions
-10021 DEF FNfoct(x)=x*8
+10021 DEF FNfoct(x%)=x%*8
 10022 DEF FNindV(i$)=mid$(i$, 2, len(i$)-2)
 
 10100 ' operand type checks
@@ -48,7 +48,7 @@
 10105 DEF FNisIndA(i$)=left$(i$,1)="(" and right$(i$, 1)=")" and FNisA(mid$(i$, 2, len(i$)-2))
 10106 DEF FNisQ(q$)=q$="bc" or q$="de" or q$="hl" or q$="ix" or q$="iy" or q$="sp"
 
-11100 ' asm main loop
+11000 ' asm main loop
 11010 ln%=0
 11020 if peek(baddr%+3) > 0 then ln% = peek(baddr%+3) * 256
 11030 ln%=ln%+peek(baddr%+2)
@@ -64,22 +64,21 @@
 11130 wend
 11140 if len(lex$)>0 then gosub 13000
 11150 if stmt$(0)="" then label$="" else label$=stmt$(0)+":"
-11160 if stmt$(1) = "org" then gosub 13100
-11170 if stmt$(1) = "add" then gosub 13110
-11180 if stmt$(1) = "ld" then gosub 14000
-11181 if stmt$(1) = "ldir" then opc1%=237:opc2%=176
-11190 if stmt$(1) = "inc" then gosub 15000
-11200 if stmt$(1) = "ret" then opc1%=201
-11570 opc$=""
+11160 if stmt$(1)="org" then gosub 13100
+11170 if stmt$(1)="add" then gosub 13110
+11180 if stmt$(1)="ld" then gosub 14000
+11181 if stmt$(1)="ldir" then opc1%=237:opc2%=176
+11190 if stmt$(1)="inc" then gosub 15000
+11200 if stmt$(1)="ret" then opc1%=201
 11500 if opc1%>-1 then opc$=hex$(opc1%)
 11510 if opc2%>-1 then opc$=opc$+hex$(opc2%)
 11520 if opc3%>-1 then opc$=opc$+hex$(opc3%)
 11530 if opc4%>-1 then opc$=opc$+hex$(opc4%)
 11540 print using "#### \      \ \       \ & &,&";ln%;opc$;label$;stmt$(1);stmt$(2);stmt$(3)
-11550 if opc1%>-1 then poke opa%, opc1% : opa% = opa% + 1
-11560 if opc2%>-1 then poke opa%, opc2% : opa% = opa% + 1
-11570 if opc3%>-1 then poke opa%, opc3% : opa% = opa% + 1
-11580 if opc4%>-1 then poke opa%, opc4% : opa% = opa% + 1
+11550 if opc1%>-1 then poke opa%,opc1%:opa%=opa%+1
+11560 if opc2%>-1 then poke opa%,opc2%:opa%=opa%+1
+11570 if opc3%>-1 then poke opa%,opc3%:opa%=opa%+1
+11580 if opc4%>-1 then poke opa%,opc4%:opa%=opa%+1
 11600 stmt$(0)="":stmt$(1)="":stmt$(2)="":stmt$(3)="":stmti%=1
 11610 opc1%=-1:opc2%=-1:opc3%=-1:opc4%=-1
 11620 baddr%=baddr%+1
@@ -93,92 +92,92 @@
 
 12000 ' lex(char arg1)
 12010 if not (arg1$=" " or arg1$=",") then lex$=lex$+arg1$ : return
-12020 if len(lex$) = 0 then return else gosub 13000
+12020 if len(lex$)=0 then return else gosub 13000
 12030 return
 
 13000 ' procesLexeme
-13010 if right$(lex$, 1) = ":" then stmt$(0) = left$(lex$, len(lex$)-1) : label = -1 : lex$="" : return
-13020 stmt$(stmti%) = lex$ : lex$=""
-13030 stmti%=stmti% + 1
+13010 if right$(lex$, 1)=":" then stmt$(0)=left$(lex$,len(lex$)-1):label=-1:lex$="":return
+13020 stmt$(stmti%)=lex$:lex$=""
+13030 stmti%=stmti%+1
 13040 return
 
 13100 ' org
-13101 if FNisA(stmt$(2)) then opa% = val(stmt$(2)) else goto 20100
+13101 if FNisA(stmt$(2)) then opa%=val(stmt$(2)) else goto 20100
 13102 if saddr%=&FFFF then saddr%=opa%
 13103 return
 
 13110 ' add
 13111 if stmt$(2)="a" then goto 13112 else goto 13114
 13112 if stmt$(3)="" then goto 20100
-13113 if FNisR(stmt$(3)) then stmt$(2) = stmt$(3) : goto 13120
+13113 if FNisR(stmt$(3)) then stmt$(2)=stmt$(3):goto 13120
 13114 if FNisR(stmt$(2)) then goto 13120
 
 13119 goto 20100
 
-13120 arg1$=stmt$(2) : gosub 20000
-13122 opc1% = (128 OR ret) : return
+13120 arg1$=stmt$(2):gosub 20000
+13122 opc1%=(128 OR ret%):return
 
 14000 ' ld
 14001 if FNisR(stmt$(2)) and FNisR(stmt$(3)) then goto 14100 ' ldrr
 14002 if FNisR(stmt$(2)) and FNisJ(stmt$(3)) then goto 14103 ' ldrj
 14003 if FNisJ(stmt$(2)) and FNisR(stmt$(3)) then goto 14106 ' ldjr
-14004 if stmt$(2)="ixh" and stmt$(3)="ixl" then opc1%=221 : opc2%=101 : return
-14005 if stmt$(2)="ixl" and stmt$(3)="ixh" then opc1%=221 : opc2%=108 : return
-14006 if stmt$(2)="iyh" and stmt$(3)="iyl" then opc1%=253 : opc2%=101 : return
-14007 if stmt$(2)="iyl" and stmt$(3)="iyh" then opc1%=253 : opc2%=108 : return
+14004 if stmt$(2)="ixh" and stmt$(3)="ixl" then opc1%=221:opc2%=101:return
+14005 if stmt$(2)="ixl" and stmt$(3)="ixh" then opc1%=221:opc2%=108:return
+14006 if stmt$(2)="iyh" and stmt$(3)="iyl" then opc1%=253:opc2%=101:return
+14007 if stmt$(2)="iyl" and stmt$(3)="iyh" then opc1%=253:opc2%=108:return
 14008 if FNisR(stmt$(2)) and FNisN(stmt$(3)) then goto 14109 ' ldrn
 14009 if FNisR(stmt$(2)) and stmt$(3)="(hl)" then goto 14111 ' ldrhl
-14010 if stmt$(2)="(hl)" and FNisN(stmt$(3)) then opc1%=54 : opc2%=val(stmt$(3)) : return
+14010 if stmt$(2)="(hl)" and FNisN(stmt$(3)) then opc1%=54:opc2%=val(stmt$(3)):return
 14011 if FNisIndA(stmt$(2)) and stmt$(3)="a" then goto 14113 
 14012 if FNisQ(stmt$(2)) and FNisA(stmt$(3)) then goto 14116
 14099 goto 20100
 
-14100 arg1$=stmt$(2) : gosub 20000 : oper1 = ret
-14101 arg1$=stmt$(3) : gosub 20000 : oper2 = ret
-14102 opc1% = 64 OR FNfoct(oper1) or oper2 : return
-14103 arg1$=stmt$(2) : gosub 20000 : oper1 = ret
-14104 arg1$=stmt$(3) : gosub 20010 : oper2xy=retxy : oper2hl=rethl
-14105 opc1% = (221 or oper2xy):opc2%=(68 or FNfoct(oper1) or oper2hl) : return
-14106 arg1$=stmt$(3) : gosub 20000 : oper1 = ret
-14107 arg1$=stmt$(2) : gosub 20010 : oper2xy=retxy : oper2hl=rethl
-14108 opc1% = (221 or oper2xy): opc2%=(96 or oper1 or FNfoct(operhl)) : return
-14109 arg1$=stmt$(2) : gosub 20000
-14110 opc1% = (6 OR FNfoct(ret)):opc2%=val(stmt$(3)) : return
-14111 arg1$=stmt$(2) : gosub 20000
-14112 opc1% = 70 OR FNfoct(ret) : return
-14113 indv$ = mid$(stmt$(2), 2, len(stmt$(2))-2)
+14100 arg1$=stmt$(2):gosub 20000:oper1%=ret%
+14101 arg1$=stmt$(3):gosub 20000:oper2%=ret%
+14102 opc1%=64 OR FNfoct(oper1%) or oper2%:return
+14103 arg1$=stmt$(2):gosub 20000:oper1%=ret%
+14104 arg1$=stmt$(3):gosub 20010:oper2xy%=retxy%:oper2hl%=rethl%
+14105 opc1%=221 or oper2xy%:opc2%=68 or FNfoct(oper1%) or oper2hl%:return
+14106 arg1$=stmt$(3):gosub 20000:oper1%=ret%
+14107 arg1$=stmt$(2):gosub 20010:oper2xy%=retxy%:oper2hl%=rethl%
+14108 opc1%=221 or oper2xy%:opc2%=96 or oper1% or FNfoct(oper2hl%):return
+14109 arg1$=stmt$(2):gosub 20000
+14110 opc1%=6 OR FNfoct(ret%):opc2%=val(stmt$(3)):return
+14111 arg1$=stmt$(2):gosub 20000
+14112 opc1%=70 OR FNfoct(ret%):return
+14113 indv$=mid$(stmt$(2),2,len(stmt$(2))-2)
 14114 if val(indv$)<0 then addr=abs(-32768+(val(indv$) and &ff00)) else addr=val(indv$)
-14115 opc1% = 50: opc2%=val(indv$) and &FF: opc3%=fix(val(indv$)/256) : return
-14116 arg1$=stmt$(2) : gosub 20020
-14117 if val(stmt$(3))<0 then addr=abs(-32768+(val(stmt$(3)) and &ff00))  else addr=val(stmt$(3))
-14118 opc1% = 1 or ret: opc2%=val(stmt$(3)) and &FF: opc3%=fix(addr/256) : return
+14115 opc1%=50:opc2%=val(indv$) and &FF:opc3%=fix(val(indv$)/256):return
+14116 arg1$=stmt$(2):gosub 20020
+14117 if val(stmt$(3))<0 then addr=abs(-32768+(val(stmt$(3)) and &ff00)) else addr=val(stmt$(3))
+14118 opc1%=1 or ret%:opc2%=val(stmt$(3)) and &FF:opc3%=fix(addr/256):return
 
 15000 ' inc
-15010 arg1$=stmt$(2) : gosub 20000
-15020 if FNisR(stmt$(2)) then opc1%=4 or FNfoct(ret) : return
+15010 arg1$=stmt$(2):gosub 20000
+15020 if FNisR(stmt$(2)) then opc1%=4 or FNfoct(ret%):return
 
 20000 ' getR(arg1$) -> R
-20001 if arg1$="a" then ret=ra: return
-20002 if arg1$="b" then ret=rb: return
-20003 if arg1$="c" then ret=rc: return
-20004 if arg1$="d" then ret=rd: return
-20005 if arg1$="e" then ret=re: return
-20006 if arg1$="h" then ret=rh: return
-20007 if arg1$="l" then ret=rl: return
-20008 ret=-1: return
+20001 if arg1$="a" then ret%=ra%:return
+20002 if arg1$="b" then ret%=rb%:return
+20003 if arg1$="c" then ret%=rc%:return
+20004 if arg1$="d" then ret%=rd%:return
+20005 if arg1$="e" then ret%=re%:return
+20006 if arg1$="h" then ret%=rh%:return
+20007 if arg1$="l" then ret%=rl%:return
+20008 ret%=-1:return
 
 20010 ' getHIR(arg1$) -> xy, hl
-20011 if arg1$="ixh" then retxy=rix:rethl=rih: return
-20012 if arg1$="ixl" then retxy=rix:rethl=ril: return
-20013 if arg1$="iyh" then retxy=riy:rethl=rih: return
-20014 if arg1$="iyl" then retxy=riy:rethl=ril: return
-20015 retxy=-1: return
+20011 if arg1$="ixh" then retxy%=rix%:rethl%=rih%:return
+20012 if arg1$="ixl" then retxy%=rix%:rethl%=ril%:return
+20013 if arg1$="iyh" then retxy%=riy%:rethl%=rih%:return
+20014 if arg1$="iyl" then retxy%=riy%:rethl%=ril%:return
+20015 retxy%=-1: return
 
 20020 ' getQ(arg1$) -> Q
-20021 if arg1$="bc" then ret=rwbc: return
-20022 if arg1$="de" then ret=rwde: return
-20023 if arg1$="hl" or arg1$="ix" or arg1$="iy" then ret=rwhlixiy: return
-20024 if arg1$="sp" then ret=rwsp: return
+20021 if arg1$="bc" then ret%=rwbc%:return
+20022 if arg1$="de" then ret%=rwde%:return
+20023 if arg1$="hl" or arg1$="ix" or arg1$="iy" then ret%=rwhlixiy%:return
+20024 if arg1$="sp" then ret%=rwsp%:return
 
 20100 ' ill inst error
 20110 if stmt$(0)="" then label$="" else label$=stmt$(0)+":"

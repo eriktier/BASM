@@ -1,4 +1,6 @@
 10 ' org &8100
+13 ' cp 10
+15 ' dec a
 20 ' label: ld   a , l 
 30 ' ld a,ixh
 40 ' ld ixh,a
@@ -16,8 +18,20 @@
 160 ' ld (bc),a
 170 ' ld (de),a
 180 ' ld (&8000),a
-190 ' inc a
-200 ' add b
+190 ' ld i,a
+200 ' ld r,a
+210 ' ld a,i
+220 ' ld a,r
+230 ' inc a
+240 ' jp nz, &8000
+250 ' jp z, &8000
+260 ' jp nc, &8000
+270 ' jp c, &8000
+280 ' jp po, &8000
+290 ' jp pe, &8000
+300 ' jp p, &8000
+310 ' jp m, &8000
+320 ' add b
 410 ' ret
 
 10000 rmode%=1:goto 10002
@@ -32,7 +46,7 @@
 10009 opa%=&8000:saddr%=&FFFF                       
 
 10010 ' operand codes
-10011 cnz%=0:cz%=1:cnc%=2:cc%=3:cpo%=4:cpe%=5:cp%=6:cm%=7
+10011 cnz%=0:cz%=8:cnc%=16:cc%=24:cpo%=32:cpe%=40:cp%=48:cm%=56
 10012 rix%=0:riy%=6:rih%=0:ril%=1
 10013 rpbc%=0:rpde%=1:rphl%=2:rpaf%=3
 10014 rwbc%=0:rwde%=16:rwhlixiy%=32:rwsp%=48
@@ -50,7 +64,7 @@
 10105 DEF FNisInd(i$)=left$(i$,1)="(" and right$(i$, 1)=")"
 10106 DEF FNisIndA(i$)=FNisA(mid$(i$, 2, len(i$)-2))
 10107 DEF FNisQ(q$)=q$="bc" or q$="de" or q$="hl" or q$="ix" or q$="iy" or q$="sp"
-
+10108 DEF FNisC(c$)=c$="nz" or c$="z" or c$="nc" or c$="c" or c$="po" or c$="pe" or c$="p" or c$="m" 
 
 11000 ' asm main loop
 11010 ln=0
@@ -70,6 +84,9 @@
 11150 if stmt$(0)="" then label$="" else label$=stmt$(0)+":"
 11160 if stmt$(1)="org" then gosub 13100
 11170 if stmt$(1)="add" then gosub 13110
+11175 if stmt$(1)="cp" then gosub 13130
+11176 if stmt$(1)="dec" then gosub 13150
+11177 if stmt$(1)="jp" then gosub 13500
 11180 if stmt$(1)="ld" then gosub 14000
 11181 if stmt$(1)="ldd" then 'opc1%=237:opc2%=176
 11181 if stmt$(1)="lddr" then 'opc1%=237:opc2%=176
@@ -123,7 +140,32 @@
 13119 goto 20100
 
 13120 arg1$=stmt$(2):gosub 20000
-13122 opc1%=(128 OR ret%):return
+13121 opc1%=(128 OR ret%):return
+
+13130 ' cp
+13131 if FNisN(stmt$(2)) then opc1%=254:opc2%=val(stmt$(2)):return
+13139 goto 20100
+
+13150 ' dec
+13151 arg1$=stmt$(2):gosub 20000
+13152 if FNisR(stmt$(2)) then opc1%=5 or FNfoct(ret%):return
+13159 goto 20100
+
+13500 'jp
+13501 'A
+13502 '(hl)
+13503 '(I)
+13504 if FNisC(stmt$(2)) and FNisA(stmt$(3)) then goto 13550 'CA
+13505 'E
+13506 'nzE
+13507 'zE
+13508 'ncE
+13509 'zE 
+13510 goto 20100
+
+13550 arg1$=stmt$(2):gosub 20030
+13551 if val(stmt$(3))<0 then addr=val(stmt$(3))+65536 else addr=val(stmt$(3))
+13552 opc1%=194 or ret%:opc2%=val(stmt$(3)) and &FF:opc3%=fix(addr/256):return
 
 14000 ' ld
 14001 if FNisR(stmt$(2)) and FNisR(stmt$(3)) then goto 14036 'RR
@@ -146,10 +188,10 @@
 14018 if stmt$(2)="(bc)" and stmt$(3)="a" then opc1%=2:return '(bc)a
 14019 if stmt$(2)="(de)" and stmt$(3)="a" then opc1%=18:return '(de)a
 14020 if FNisInd(stmt$(2)) then if FNisIndA(stmt$(2)) and stmt$(3)="a" then goto 14140 '(A)a
-14021 'ia
-14022 'ra
-14023 'ai
-14024 'ar
+14021 if stmt$(2)="i" and stmt$(3)="a" then opc1%=237:opc2%=71:return 'ia
+14022 if stmt$(2)="r" and stmt$(3)="a" then opc1%=237:opc2%=79:return 'ra
+14023 if stmt$(2)="a" and stmt$(3)="i" then opc1%=237:opc2%=87:return 'ai
+14024 if stmt$(2)="a" and stmt$(3)="r" then opc1%=237:opc2%=95:return 'ar
 14025 if FNisQ(stmt$(2)) and FNisA(stmt$(3)) then goto 14116 'QA
 14026 'IA
 14027 'Q(A)
@@ -213,6 +255,16 @@
 20022 if arg1$="de" then ret%=rwde%:return
 20023 if arg1$="hl" or arg1$="ix" or arg1$="iy" then ret%=rwhlixiy%:return
 20024 if arg1$="sp" then ret%=rwsp%:return
+
+20030 ' getC(arg1$) -> C
+20031 if arg1$="nz" then ret%=cnz%:return
+20032 if arg1$="z" then ret%=cz%:return
+20033 if arg1$="nc" then ret%=cnc%:return
+20034 if arg1$="c" then ret%=cc%:return
+20035 if arg1$="po" then ret%=cpo%:return
+20036 if arg1$="pe" then ret%=cpe%:return
+20037 if arg1$="p" then ret%=cp%:return
+20038 if arg1$="m" then ret%=cm%:return
 
 20100 ' ill inst error
 20110 if stmt$(0)="" then label$="" else label$=stmt$(0)+":"

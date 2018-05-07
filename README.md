@@ -41,7 +41,7 @@ And the machine code in memory:
 
 ![screenshot](https://user-images.githubusercontent.com/796635/39574275-734324dc-4ece-11e8-9918-98d7b6eb835f.png)
 
-## Test filers
+## Test files
 
 BASM now succesfully assembles and runs the first 3 code examples from: http://www.chibiakumas.com/z80/.
 

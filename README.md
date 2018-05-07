@@ -60,7 +60,7 @@ There are two run modes:
 1. assemble and print to screen: type 'run'
 2. mode 1 + run: type 'run 10001'
 
-You can ofcourse also just type 'call <address of assembled code>', after running the assembler, to run the assembled program.
+You can ofcourse also just type 'call _address of assembled code_', after running the assembler, to run the assembled program.
 
 Alternatively you can use the BASM.atp file through: File/Auto type...
 Once the Auto type window shows the file, click ok and it will 'type' the full code and run it using the built-in test asm. To speed up the auto typing, first set winape into high speed mode: settings/High Speed (1000%).

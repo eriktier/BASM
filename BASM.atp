@@ -1,38 +1,38 @@
 10 ' org &8100
-13 ' cp 10
-15 ' dec a
-20 ' label: ld   a , l 
-30 ' ld a,ixh
-40 ' ld ixh,a
-50 ' ld ixh, ixl
-60 ' ld ixl,ixh
-70 ' ld iyh,iyl
-80 ' ld iyl,iyh
-90 ' ld a, 100
-100 ' ld a,(hl)
-110 ' ld (hl),a
-120 ' ld (hl),10
-130 ' ld a,(bc)
-140 ' ld a,(de)
-150 ' ld a,(&8000)
-160 ' ld (bc),a
-170 ' ld (de),a
-180 ' ld (&8000),a
-190 ' ld i,a
-200 ' ld r,a
-210 ' ld a,i
-220 ' ld a,r
-230 ' inc a
-240 ' jp nz, &8000
-250 ' jp z, &8000
-260 ' jp nc, &8000
-270 ' jp c, &8000
-280 ' jp po, &8000
-290 ' jp pe, &8000
-300 ' jp p, &8000
-310 ' jp m, &8000
-320 ' add b
-410 ' ret
+20 ' cp 10
+30 ' dec a
+40 ' label: ld   a , l 
+50 ' ld a,ixh
+60 ' ld ixh,a
+70 ' ld ixh, ixl
+80 ' ld ixl,ixh
+90 ' ld iyh,iyl
+100 ' ld iyl,iyh
+110 ' ld a, 100
+120 ' ld a,(hl)
+130 ' ld (hl),a
+140 ' ld (hl),10
+150 ' ld a,(bc)
+160 ' ld a,(de)
+170 ' ld a,(&8000)
+180 ' ld (bc),a
+190 ' ld (de),a
+200 ' ld (&8000),a
+210 ' ld i,a
+220 ' ld r,a
+230 ' ld a,i
+240 ' ld a,r
+250 ' inc a
+260 ' jp nz, &8000
+270 ' jp z, &8000
+280 ' jp nc, &8000
+290 ' jp c, &8000
+300 ' jp po, &8000
+310 ' jp pe, &8000
+320 ' jp p, &8000
+330 ' jp m, &8000
+340 ' add b
+400 ' ret
 
 10000 rmode%=1:goto 10002
 10001 rmode%=0
